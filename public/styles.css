@@ -1,0 +1,422 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary-color: #6a11cb;
+    --secondary-color: #2575fc;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-color: #ffffff;
+    --input-bg: rgba(255, 255, 255, 0.2);
+    --card-bg: rgba(255, 255, 255, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-color);
+    padding: 20px;
+}
+
+.container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+h1, h2 {
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: white;
+    font-size: 1em;
+    outline: none;
+    transition: 0.3s;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+input:focus, select:focus {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #fff;
+}
+
+/* Custom Select Styling to handle dark option backgrounds */
+select option {
+    background: #333;
+    color: white;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+}
+
+/* Dashboard Specifics */
+.dashboard-container {
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    padding: 8px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.9em;
+    width: auto;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.admin-panel {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.ideas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.idea-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 20px;
+    transition: 0.3s;
+}
+
+.idea-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.idea-title {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+    color: #ffd700;
+}
+
+.role-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.role-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.role-name {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+.role-status {
+    font-size: 0.9em;
+}
+
+.join-btn {
+    background: #00b09b; /* fallback for old browsers */
+    background: linear-gradient(to right, #96c93d, #00b09b);
+    padding: 5px 15px;
+    border: none;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.8em;
+    width: auto;
+}
+
+.join-btn:hover {
+    opacity: 0.9;
+}
+
+.member-name {
+    color: #ff9a9e;
+    font-weight: bold;
+}
+
+.delete-role-btn {
+    background: #e74c3c;
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.delete-role-btn:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.roles-link-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    padding: 8px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: white;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.roles-link-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.roles-container {
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.role-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 25px;
+    transition: 0.3s;
+    text-align: left;
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.5);
+}
+
+.role-card-title {
+    font-size: 1.8em;
+    margin-bottom: 15px;
+    color: #ffd700;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+    padding-bottom: 10px;
+}
+
+.role-card-description {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    font-size: 1em;
+}
+
+.role-card-responsibilities {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.role-card-responsibilities h4 {
+    color: #ff9a9e;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.role-card-responsibilities ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.role-card-responsibilities li {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.role-card-responsibilities li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #96c93d;
+    font-weight: bold;
+}
+
+.edit-role-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+.edit-role-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 0;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #ffd700;
+}
+
+.close-modal {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.close-modal:hover {
+    color: white;
+    transform: scale(1.1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: white;
+    font-size: 1em;
+    outline: none;
+    transition: 0.3s;
+    font-family: 'Poppins', sans-serif;
+    resize: vertical;
+}
+
+.modal-body textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.modal-body textarea:focus {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #fff;
+}

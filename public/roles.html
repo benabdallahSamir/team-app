@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Up - Roles Explained</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container roles-container">
+        <div class="header">
+            <h2>Team Roles Explained</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="editRolesBtn" class="roles-link-btn" style="display: none;">Edit Roles</button>
+                <a href="/dashboard" class="roles-link-btn">Back to Dashboard</a>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <div id="rolesGrid" class="roles-grid">
+            <!-- Roles will be loaded dynamically -->
+        </div>
+
+        <!-- Admin Edit Modal -->
+        <div id="editRoleModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Role Definition</h3>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="editRoleForm">
+                        <input type="hidden" id="editRoleKey">
+                        <div class="form-group">
+                            <label>Title:</label>
+                            <input type="text" id="editRoleTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Icon (emoji):</label>
+                            <input type="text" id="editRoleIcon" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description:</label>
+                            <textarea id="editRoleDescription" rows="4" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsibilities (one per line):</label>
+                            <textarea id="editRoleResponsibilities" rows="6" required></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="submit" class="btn">Save Changes</button>
+                            <button type="button" class="btn" style="background: #6c757d;" onclick="closeEditModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check Auth (token from backend)
+            const token = localStorage.getItem('token');
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!token || !currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Admin check
+            const isAdmin = currentUser.isAdmin === true || (
+                currentUser.email === 'samir@gmail.com' && 
+                currentUser.name.toLowerCase() === 'samir'
+            );
+
+            if (isAdmin) {
+                document.getElementById('editRolesBtn').style.display = 'block';
+            }
+
+            // Load roles
+            loadRoles();
+
+            // Logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('token');
+                window.location.href = 'index.html';
+            });
+
+            // Edit roles button
+            document.getElementById('editRolesBtn').addEventListener('click', () => {
+                const cards = document.querySelectorAll('.role-card');
+                cards.forEach(card => {
+                    const editBtn = card.querySelector('.edit-role-btn');
+                    if (editBtn) {
+                        editBtn.style.display = editBtn.style.display === 'none' ? 'inline-block' : 'none';
+                    }
+                });
+            });
+
+            // Close modal
+            document.querySelector('.close-modal').addEventListener('click', closeEditModal);
+            document.getElementById('editRoleForm').addEventListener('submit', saveRoleChanges);
+            
+            // Close modal when clicking outside
+            document.getElementById('editRoleModal').addEventListener('click', (e) => {
+                if (e.target.id === 'editRoleModal') {
+                    closeEditModal();
+                }
+            });
+        });
+
+        async function loadRoles() {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/roles', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!res.ok) throw new Error('Failed to load roles');
+                const roles = await res.json();
+                renderRoles(roles);
+            } catch (error) {
+                console.error('Error loading roles:', error);
+                document.getElementById('rolesGrid').innerHTML = '<p style="color: white;">Failed to load roles.</p>';
+            }
+        }
+
+        function renderRoles(roles) {
+            const grid = document.getElementById('rolesGrid');
+            const isAdmin = JSON.parse(localStorage.getItem('currentUser')).isAdmin === true || 
+                (JSON.parse(localStorage.getItem('currentUser')).email === 'samir@gmail.com' && 
+                 JSON.parse(localStorage.getItem('currentUser')).name.toLowerCase() === 'samir');
+
+            grid.innerHTML = roles.map(role => `
+                <div class="role-card">
+                    <h3 class="role-card-title">${role.icon} ${role.title}</h3>
+                    ${isAdmin ? `<button class="edit-role-btn" onclick="openEditModal('${role.roleKey}')" style="display: none;">Edit</button>` : ''}
+                    <p class="role-card-description">${role.description}</p>
+                    <div class="role-card-responsibilities">
+                        <h4>Key Responsibilities:</h4>
+                        <ul>
+                            ${role.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openEditModal(roleKey) {
+            const token = localStorage.getItem('token');
+            fetch('/api/roles', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(res => res.json())
+            .then(roles => {
+                const role = roles.find(r => r.roleKey === roleKey);
+                if (role) {
+                    document.getElementById('editRoleKey').value = role.roleKey;
+                    document.getElementById('editRoleTitle').value = role.title;
+                    document.getElementById('editRoleIcon').value = role.icon;
+                    document.getElementById('editRoleDescription').value = role.description;
+                    document.getElementById('editRoleResponsibilities').value = role.responsibilities.join('\n');
+                    document.getElementById('editRoleModal').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading role:', error);
+                Swal.fire('Error', 'Failed to load role details', 'error');
+            });
+        }
+
+        function closeEditModal() {
+            document.getElementById('editRoleModal').style.display = 'none';
+        }
+
+        async function saveRoleChanges(e) {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const roleKey = document.getElementById('editRoleKey').value;
+            const title = document.getElementById('editRoleTitle').value;
+            const icon = document.getElementById('editRoleIcon').value;
+            const description = document.getElementById('editRoleDescription').value;
+            const responsibilities = document.getElementById('editRoleResponsibilities').value
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            try {
+                const res = await fetch(`/api/roles/${roleKey}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        title,
+                        icon,
+                        description,
+                        responsibilities
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message || 'Failed to update role');
+                }
+
+                Swal.fire('Success', 'Role definition updated successfully!', 'success');
+                closeEditModal();
+                loadRoles();
+            } catch (error) {
+                console.error('Error updating role:', error);
+                Swal.fire('Error', error.message || 'Failed to update role definition', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+

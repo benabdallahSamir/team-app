@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Up - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <div class="header">
+            <h2>Hello, <span id="userName">User</span>!</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <a href="/roles" class="roles-link-btn">View Roles</a>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <div id="adminPanel" class="admin-panel" style="display: none;">
+            <h3>Admin Controls</h3>
+            <div class="admin-controls">
+                <!-- Create Idea Section -->
+                <div class="create-idea-section">
+                    <h4>Create New Idea</h4>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <input type="text" id="ideaTitle" placeholder="Project Idea Title">
+                        <button id="addIdeaBtn" class="btn" style="width: 150px;">Add Idea</button>
+                    </div>
+                </div>
+
+                <!-- User Management Section -->
+                <div class="user-management-section" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                    <button id="showUsersBtn" class="btn">Show All Users</button>
+                    
+                    <div id="usersSection" style="display: none; margin-top: 20px;">
+                        <h4>Registered Users</h4>
+                        <div class="table-container">
+                            <table id="usersTable" style="width: 100%; text-align: left; border-collapse: collapse; color: white;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                                        <th style="padding: 10px;">Name</th>
+                                        <th style="padding: 10px;">Email</th>
+
+                                        <th style="padding: 10px;">Current Team / Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Users will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ideasList" class="ideas-grid">
+            <!-- Ideas will be injected here via JS -->
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

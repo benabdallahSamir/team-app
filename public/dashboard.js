@@ -99,6 +99,44 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html';
     });
 
+    // 6b. Delete Account (only if user has no roles on backend)
+    document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+        Swal.fire({
+            title: 'Delete Account?',
+            text: 'This will permanently delete your account. You can only do this if you are not part of any project.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it'
+        }).then(async (result) => {
+            if (!result.isConfirmed) return;
+
+            try {
+                const res = await fetch('/api/account', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.message || 'Failed to delete account');
+                }
+
+                Swal.fire('Deleted', 'Your account has been deleted.', 'success').then(() => {
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('token');
+                    window.location.href = 'index.html';
+                });
+            } catch (error) {
+                console.error('Error deleting account:', error);
+                Swal.fire('Error', error.message || 'Failed to delete account', 'error');
+            }
+        });
+    });
+
     // 7. Render Function
     function renderIdeas() {
         ideasList.innerHTML = '';

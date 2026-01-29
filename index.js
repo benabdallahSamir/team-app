@@ -653,6 +653,35 @@ app.put('/api/roles/:roleKey', authRequired, adminRequired, async (req, res) => 
   }
 });
 
+// ----- Account Deletion -----
+app.delete('/api/account', authRequired, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Check if user has any active roles in projects
+    const membership = db
+      .prepare(
+        'SELECT 1 FROM idea_members WHERE userId = ? LIMIT 1'
+      )
+      .get(userId);
+
+    if (membership) {
+      return res.status(400).json({
+        message:
+          'You cannot delete your account while you have a role in a project. Please leave all teams first.',
+      });
+    }
+
+    // Delete user account
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (err) {
+    console.error('delete account error:', err);
+    res.status(500).json({ message: 'Failed to delete account' });
+  }
+});
+
 // ----- Start Server -----
 app.listen(PORT, () => {
   console.log(`🚀 team-app-server listening on http://localhost:${PORT}`);

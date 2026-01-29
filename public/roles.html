@@ -130,11 +130,15 @@
 
         function renderRoles(roles) {
             const grid = document.getElementById('rolesGrid');
-            const isAdmin = JSON.parse(localStorage.getItem('currentUser')).isAdmin === true || 
-                (JSON.parse(localStorage.getItem('currentUser')).email === 'samir@gmail.com' && 
-                 JSON.parse(localStorage.getItem('currentUser')).name.toLowerCase() === 'samir');
+            const current = JSON.parse(localStorage.getItem('currentUser'));
+            const isAdmin = current.isAdmin === true || 
+                (current.email === 'samir@gmail.com' && 
+                 current.name.toLowerCase() === 'samir');
 
-            grid.innerHTML = roles.map(role => `
+            // Hide admin role card from the list
+            const visibleRoles = roles.filter(role => role.roleKey !== 'admin');
+
+            grid.innerHTML = visibleRoles.map(role => `
                 <div class="role-card">
                     <h3 class="role-card-title">${role.icon} ${role.title}</h3>
                     ${isAdmin ? `<button class="edit-role-btn" onclick="openEditModal('${role.roleKey}')" style="display: none;">Edit</button>` : ''}

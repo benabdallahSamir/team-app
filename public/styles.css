@@ -39,6 +39,13 @@ body {
     text-align: center;
 }
 
+/* Larger containers for dashboard / roles pages */
+.container.dashboard-container,
+.container.roles-container {
+    max-width: 1200px;
+    text-align: left;
+}
+
 h1, h2 {
     margin-bottom: 20px;
     font-weight: 700;
@@ -248,7 +255,6 @@ select option {
 }
 
 .roles-container {
-    max-width: 1200px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -419,4 +425,83 @@ select option {
 .modal-body textarea:focus {
     background: rgba(255, 255, 255, 0.3);
     border-color: #fff;
+}
+
+/* ---------- Responsive Layout ---------- */
+@media (max-width: 900px) {
+    body {
+        align-items: flex-start;
+        padding: 10px;
+    }
+
+    .container {
+        padding: 20px;
+        border-radius: 16px;
+    }
+
+    .container.dashboard-container,
+    .container.roles-container {
+        max-width: 100%;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .header > div {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .ideas-grid,
+    .roles-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .idea-card,
+    .role-card {
+        padding: 16px;
+    }
+
+    .admin-panel {
+        padding: 15px;
+    }
+
+    .admin-controls .create-idea-section > div {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-controls .create-idea-section input,
+    .admin-controls .create-idea-section button {
+        width: 100% !important;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    h1, h2 {
+        font-size: 1.4rem;
+    }
+
+    .idea-title {
+        font-size: 1.2rem;
+    }
+
+    .role-card-title {
+        font-size: 1.4rem;
+    }
+
+    .logout-btn,
+    .roles-link-btn {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+    }
 }

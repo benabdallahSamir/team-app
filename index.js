@@ -58,6 +58,14 @@ db.exec(`
     updatedAt TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS cgc_blacklist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    decisionDate TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS idea_members (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ideaId INTEGER NOT NULL,
@@ -109,6 +117,19 @@ if (roleCount.count === 0) {
       ])
     },
     {
+      roleKey: 'content_manager',
+      title: 'Content Manager',
+      icon: '📝',
+      description: 'The Content Manager is responsible for shaping the project\'s narrative and ensuring all content is engaging and on-brand.',
+      responsibilities: JSON.stringify([
+        'Develop content strategy',
+        'Create and edit content',
+        'Manage social media presence',
+        'Ensure brand consistency',
+        'Collaborate with design team'
+      ])
+    },
+    {
       roleKey: 'designer',
       title: 'Designer',
       icon: '🎨',
@@ -122,29 +143,16 @@ if (roleCount.count === 0) {
       ])
     },
     {
-      roleKey: 'programmer1',
-      title: 'Programmer 1',
+      roleKey: 'programmer',
+      title: 'Programmer',
       icon: '💻',
-      description: 'Programmer 1 is responsible for implementing core features and functionality. They work closely with the designer to bring the vision to life.',
+      description: 'The Programmer is responsible for implementing the technical solution. They build the features, fix bugs, and ensure the software runs smoothly.',
       responsibilities: JSON.stringify([
         'Develop core features',
         'Write clean, maintainable code',
         'Implement frontend/backend logic',
         'Debug and fix issues',
         'Collaborate with team members'
-      ])
-    },
-    {
-      roleKey: 'programmer2',
-      title: 'Programmer 2',
-      icon: '⚙️',
-      description: 'Programmer 2 works alongside Programmer 1 to build additional features and ensure the project meets all technical requirements.',
-      responsibilities: JSON.stringify([
-        'Develop additional features',
-        'Optimize code performance',
-        'Write unit tests',
-        'Review code from Programmer 1',
-        'Ensure code quality standards'
       ])
     }
   ];
@@ -156,6 +164,63 @@ if (roleCount.count === 0) {
   for (const role of defaultRoles) {
     insertRole.run(role.roleKey, role.title, role.icon, role.description, role.responsibilities);
   }
+}
+
+// Ensure users table has cgc_decision column
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(users)").all();
+  if (!tableInfo.find(c => c.name === 'cgc_decision')) {
+    db.prepare("ALTER TABLE users ADD COLUMN cgc_decision TEXT").run();
+  }
+} catch (err) {
+  console.error("Migration error adding cgc_decision:", err);
+}
+
+// ----- Migration / Sync Roles -----
+// Ensure database matches the new requirement: 1 Programmer definition, 1 Content Manager definition
+try {
+  // 1. Remove programmer2 definition if exists
+  db.prepare('DELETE FROM role_definitions WHERE roleKey = ?').run('programmer2');
+
+  // 2. Rename programmer1 -> programmer if programmer1 exists and programmer doesn't
+  const p1 = db.prepare('SELECT 1 FROM role_definitions WHERE roleKey = ?').get('programmer1');
+  const p = db.prepare('SELECT 1 FROM role_definitions WHERE roleKey = ?').get('programmer');
+  
+  if (p1 && !p) {
+    db.prepare('UPDATE role_definitions SET roleKey = ?, title = ? WHERE roleKey = ?')
+      .run('programmer', 'Programmer', 'programmer1');
+  } else if (!p) {
+    // Insert if missing (and wasn't p1)
+    db.prepare('INSERT INTO role_definitions (roleKey, title, icon, description, responsibilities) VALUES (?, ?, ?, ?, ?)')
+      .run(
+        'programmer', 
+        'Programmer', 
+        '💻', 
+        'The Programmer is responsible for implementing the technical solution.',
+        JSON.stringify(['Develop core features', 'Write clean code', 'Debug and fix issues'])
+      );
+  }
+
+  // 3. Ensure content_manager exists
+  const cm = db.prepare('SELECT 1 FROM role_definitions WHERE roleKey = ?').get('content_manager');
+  if (!cm) {
+    db.prepare('INSERT INTO role_definitions (roleKey, title, icon, description, responsibilities) VALUES (?, ?, ?, ?, ?)')
+      .run(
+        'content_manager',
+        'Content Manager',
+        '📝',
+        'The Content Manager is responsible for shaping the project\'s narrative and ensuring all content is engaging and on-brand.',
+        JSON.stringify([
+          'Develop content strategy',
+          'Create and edit content',
+          'Manage social media presence',
+          'Ensure brand consistency',
+          'Collaborate with design team'
+        ])
+      );
+  }
+} catch (err) {
+  console.error("Role migration error:", err);
 }
 
 // Helper to load ideas with members in the same shape as before
@@ -172,6 +237,7 @@ function getIdeasWithMembers() {
     const membersRows = membersStmt.all(idea.id);
     const members = {
       leader: null,
+      content_manager: null,
       designer: null,
       programmer1: null,
       programmer2: null,
@@ -202,6 +268,7 @@ function createToken(user) {
       email: user.email,
       isAdmin: !!user.isAdmin,
       name: user.name,
+      cgc_decision: user.cgc_decision
     },
     JWT_SECRET,
     { expiresIn: '7d' }
@@ -229,7 +296,7 @@ async function authRequired(req, res, next) {
     const payload = jwt.verify(token, JWT_SECRET);
     const user = db
       .prepare(
-        'SELECT id, name, email, isAdmin FROM users WHERE id = ?'
+        'SELECT id, name, email, isAdmin, cgc_decision FROM users WHERE id = ?'
       )
       .get(payload.id);
 
@@ -295,9 +362,9 @@ app.post('/api/auth/register', async (req, res) => {
 
     const info = db
       .prepare(
-        'INSERT INTO users (name, email, passwordHash, isAdmin) VALUES (?, ?, ?, ?)'
+        'INSERT INTO users (name, email, passwordHash, isAdmin, cgc_decision) VALUES (?, ?, ?, ?, ?)'
       )
-      .run(firstName, email, passwordHash, isAdmin ? 1 : 0);
+      .run(firstName, email, passwordHash, isAdmin ? 1 : 0, null);
 
     const user = {
       id: info.lastInsertRowid,
@@ -313,6 +380,7 @@ app.post('/api/auth/register', async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        cgc_decision: null
       },
       token,
     });
@@ -333,7 +401,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     const user = db
       .prepare(
-        'SELECT id, name, email, passwordHash, isAdmin FROM users WHERE email = ?'
+        'SELECT id, name, email, passwordHash, isAdmin, cgc_decision FROM users WHERE email = ?'
       )
       .get(email);
 
@@ -353,6 +421,7 @@ app.post('/api/auth/login', async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: !!user.isAdmin,
+        cgc_decision: user.cgc_decision
       },
       token,
     });
@@ -369,6 +438,7 @@ app.get('/api/auth/me', authRequired, (req, res) => {
     name: user.name,
     email: user.email,
     isAdmin: !!user.isAdmin,
+    cgc_decision: user.cgc_decision
   });
 });
 
@@ -419,7 +489,7 @@ app.post('/api/ideas/:id/join', authRequired, async (req, res) => {
   try {
     const { id } = req.params;
     const { roleKey } = req.body;
-    const validRoles = ['leader', 'designer', 'programmer1', 'programmer2'];
+    const validRoles = ['leader', 'content_manager', 'designer', 'programmer1', 'programmer2'];
 
     if (!validRoles.includes(roleKey)) {
       return res.status(400).json({ message: 'Invalid role' });
@@ -607,6 +677,44 @@ app.get('/api/roles', authRequired, async (req, res) => {
   }
 });
 
+// ----- CGC Decision API -----
+app.post('/api/user/cgc-decision', authRequired, async (req, res) => {
+  try {
+    const { decision } = req.body;
+    if (decision !== 'yes' && decision !== 'no') {
+      return res.status(400).json({ message: 'Invalid decision choice' });
+    }
+
+    // Update user
+    db.prepare('UPDATE users SET cgc_decision = ? WHERE id = ?').run(decision, req.user.id);
+
+    // If no, add to blacklist
+    if (decision === 'no') {
+      const existing = db.prepare('SELECT 1 FROM cgc_blacklist WHERE email = ?').get(req.user.email);
+      if (!existing) {
+        const now = new Date().toISOString();
+        db.prepare('INSERT INTO cgc_blacklist (userId, name, email, decisionDate) VALUES (?, ?, ?, ?)')
+          .run(req.user.id, req.user.name, req.user.email, now);
+      }
+    }
+
+    res.json({ message: 'Decision recorded', cgc_decision: decision });
+  } catch (err) {
+    console.error('cgc decision error:', err);
+    res.status(500).json({ message: 'Failed to record decision' });
+  }
+});
+
+app.get('/api/admin/blacklist', authRequired, adminRequired, async (req, res) => {
+  try {
+    const list = db.prepare('SELECT * FROM cgc_blacklist ORDER BY decisionDate DESC').all();
+    res.json(list);
+  } catch (err) {
+    console.error('blacklist fetch error:', err);
+    res.status(500).json({ message: 'Failed to fetch blacklist' });
+  }
+});
+
 app.put('/api/roles/:roleKey', authRequired, adminRequired, async (req, res) => {
   try {
     const { roleKey } = req.params;
@@ -620,7 +728,7 @@ app.put('/api/roles/:roleKey', authRequired, adminRequired, async (req, res) => 
       return res.status(400).json({ message: 'responsibilities must be an array' });
     }
 
-    const validRoleKeys = ['admin', 'leader', 'designer', 'programmer1', 'programmer2'];
+    const validRoleKeys = ['admin', 'leader', 'content_manager', 'designer', 'programmer'];
     if (!validRoleKeys.includes(roleKey)) {
       return res.status(400).json({ message: 'Invalid role key' });
     }

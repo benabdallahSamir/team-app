@@ -30,9 +30,11 @@
                     </div>
                 </div>
 
-                <!-- User Management Section -->
                 <div class="user-management-section" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                    <button id="showUsersBtn" class="btn">Show All Users</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="showUsersBtn" class="btn">Show All Users</button>
+                        <button id="showBlacklistBtn" class="btn" style="background-color: #d35400;">Show Blacklist</button>
+                    </div>
                     
                     <div id="usersSection" style="display: none; margin-top: 20px;">
                         <h4>Registered Users</h4>
@@ -42,12 +44,29 @@
                                     <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
                                         <th style="padding: 10px;">Name</th>
                                         <th style="padding: 10px;">Email</th>
-
                                         <th style="padding: 10px;">Current Team / Role</th>
                                     </tr>
                                 </thead>
                                 <tbody id="usersTableBody">
                                     <!-- Users will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="blacklistSection" style="display: none; margin-top: 20px;">
+                        <h4 style="color: #e67e22;">CGC Blacklist (Declined Users)</h4>
+                        <div class="table-container">
+                            <table id="blacklistTable" style="width: 100%; text-align: left; border-collapse: collapse; color: white;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                                        <th style="padding: 10px;">Name</th>
+                                        <th style="padding: 10px;">Email</th>
+                                        <th style="padding: 10px;">Date Declined</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="blacklistTableBody">
+                                    <!-- Blacklist users will be populated here -->
                                 </tbody>
                             </table>
                         </div>
@@ -58,6 +77,35 @@
 
         <div id="ideasList" class="ideas-grid">
             <!-- Ideas will be injected here via JS -->
+        </div>
+
+        <!-- Access Denied Message (Hidden by default) -->
+        <div id="accessDeniedSection" style="display: none; text-align: center; padding: 50px; color: #e67e22;">
+            <h2 style="font-size: 2em; margin-bottom: 20px;">Access Denied</h2>
+            <p style="font-size: 1.2em; margin-bottom: 30px;">You have declined the CGC Club membership.</p>
+            <button id="reAnswerBtn" class="btn" style="background-color: #3498db;">Re-evaluate Decision</button>
+        </div>
+    </div>
+
+    <!-- CGC Decision Alert -->
+    <div id="cgcAlert" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(20,20,20,0.95)); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: #2c2c2c; padding: 40px; border-radius: 12px; text-align: center; max-width: 500px; border: 2px solid #e67e22; box-shadow: 0 0 20px rgba(230, 126, 34, 0.5);">
+            <h2 style="color: #e67e22; margin-bottom: 20px;">CGC Club Confirmation</h2>
+            <p style="color: #ddd; margin-bottom: 30px; font-size: 1.1em;">Do you want to continue with the CGC Club?</p>
+            
+            <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 30px;">
+                <label style="color: white; font-size: 1.2em; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="cgcYes" class="cgc-checkbox" style="transform: scale(1.5);">
+                    Yes
+                </label>
+                <label style="color: white; font-size: 1.2em; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="cgcNo" class="cgc-checkbox" style="transform: scale(1.5);">
+                    No
+                </label>
+            </div>
+
+            <button id="cgcConfirmBtn" class="btn" style="background-color: #e67e22; width: 100%; font-size: 1.1em; padding: 12px;">Confirm Choice</button>
+            <p style="margin-top: 15px; font-size: 0.9em; color: #999;">Only "Yes" will grant access to projects.</p>
         </div>
     </div>
 

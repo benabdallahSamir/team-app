@@ -16,6 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const showUsersBtn = document.getElementById('showUsersBtn');
     const usersSection = document.getElementById('usersSection');
     const usersTableBody = document.getElementById('usersTableBody');
+    const blacklistSection = document.getElementById('blacklistSection');
+    const showBlacklistBtn = document.getElementById('showBlacklistBtn');
+    const blacklistTableBody = document.getElementById('blacklistTableBody');
+    const cgcAlert = document.getElementById('cgcAlert');
+    const cgcYes = document.getElementById('cgcYes');
+    const cgcNo = document.getElementById('cgcNo');
+    const cgcConfirmBtn = document.getElementById('cgcConfirmBtn');
+    const accessDeniedSection = document.getElementById('accessDeniedSection');
+    const reAnswerBtn = document.getElementById('reAnswerBtn');
 
     // 3. Admin Check (prefer backend flag, keep legacy rule as fallback)
     const isAdmin = currentUser.isAdmin === true || (
@@ -31,16 +40,112 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderAllUsers();
                 usersSection.style.display = 'block';
                 showUsersBtn.textContent = 'Hide Users';
+                blacklistSection.style.display = 'none'; // Hide blacklist if open
+                showBlacklistBtn.textContent = 'Show Blacklist';
             } else {
                 usersSection.style.display = 'none';
                 showUsersBtn.textContent = 'Show All Users';
             }
         });
+
+        showBlacklistBtn.addEventListener('click', () => {
+             if (blacklistSection.style.display === 'none') {
+                renderBlacklist();
+                blacklistSection.style.display = 'block';
+                showBlacklistBtn.textContent = 'Hide Blacklist';
+                usersSection.style.display = 'none'; // Hide users if open
+                showUsersBtn.textContent = 'Show All Users';
+            } else {
+                blacklistSection.style.display = 'none';
+                showBlacklistBtn.textContent = 'Show Blacklist';
+            }
+        });
     }
 
-    // 4. Initial Load
+    // Global ideas state
     let ideas = [];
-    loadIdeas();
+
+    // 4. CGC Status Check
+    checkCGCStatus();
+
+    function checkCGCStatus() {
+        if (!currentUser.cgc_decision) {
+            // No decision yet -> Show Alert, Hide Content
+            cgcAlert.style.display = 'flex';
+            document.querySelector('.header').style.filter = 'blur(5px)';
+            ideasList.style.display = 'none';
+            accessDeniedSection.style.display = 'none';
+        } else if (currentUser.cgc_decision === 'no') {
+            // Decision 'no' -> Hide Content, Show Access Denied Section
+            ideasList.style.display = 'none';
+            accessDeniedSection.style.display = 'block';
+            document.querySelector('.header').style.display = 'none'; // Hide header controls too
+        } else {
+            // Decision 'yes' -> Show Content
+            accessDeniedSection.style.display = 'none';
+            ideasList.style.display = 'grid'; // Restore grid display
+            document.querySelector('.header').style.display = 'flex'; // Restore header
+            document.querySelector('.header').style.filter = 'none';
+            loadIdeas();
+        }
+    }
+
+    // Re-answer button logic
+    if (reAnswerBtn) {
+        reAnswerBtn.addEventListener('click', () => {
+            // Reset UI to show alert
+            accessDeniedSection.style.display = 'none';
+            cgcAlert.style.display = 'flex';
+            
+            // Clear current selection
+            cgcYes.checked = false;
+            cgcNo.checked = false;
+        });
+    }
+
+    // CGC Interactions
+    if (cgcYes && cgcNo) {
+        cgcYes.addEventListener('change', () => {
+            if (cgcYes.checked) cgcNo.checked = false;
+        });
+        cgcNo.addEventListener('change', () => {
+            if (cgcNo.checked) cgcYes.checked = false;
+        });
+
+        cgcConfirmBtn.addEventListener('click', async () => {
+            if (!cgcYes.checked && !cgcNo.checked) {
+                Swal.fire('Selection Required', 'Please select Yes or No.', 'warning');
+                return;
+            }
+
+            const decision = cgcYes.checked ? 'yes' : 'no';
+            try {
+                const res = await fetch('/api/user/cgc-decision', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ decision })
+                });
+
+                if (!res.ok) throw new Error('Failed to save decision');
+
+                // Update local user
+                currentUser.cgc_decision = decision;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                // Update UI
+                cgcAlert.style.display = 'none';
+                document.querySelector('.header').style.filter = 'none';
+                
+                checkCGCStatus(); // Re-run status check to show/hide content
+            } catch (error) {
+                console.error('CGC decision error:', error);
+                Swal.fire('Error', 'Failed to save your choice.', 'error');
+            }
+        });
+    }
 
     async function loadIdeas() {
         try {
@@ -152,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const rolesHtml = `
                 <div class="role-list">
                     ${createRoleItem(idea, 'Leader', 'leader')}
+                    ${createRoleItem(idea, 'Content Manager', 'content_manager')}
                     ${createRoleItem(idea, 'Designer', 'designer')}
                     ${createRoleItem(idea, 'Programmer 1', 'programmer1')}
                     ${createRoleItem(idea, 'Programmer 2', 'programmer2')}
@@ -287,6 +393,35 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } catch (error) {
             console.error('Error fetching users:', error);
+        }
+    }
+
+    // Admin: Render Blacklist
+    async function renderBlacklist() {
+        try {
+            const res = await fetch('/api/admin/blacklist', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const list = await res.json();
+            blacklistTableBody.innerHTML = '';
+
+            if (!res.ok || list.length === 0) {
+                 blacklistTableBody.innerHTML = '<tr><td colspan="3" style="padding:10px;">No blacklist entries found.</td></tr>';
+                 return;
+            }
+
+            list.forEach(item => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                row.innerHTML = `
+                    <td style="padding: 10px;">${item.name}</td>
+                    <td style="padding: 10px;">${item.email}</td>
+                    <td style="padding: 10px;">${new Date(item.decisionDate).toLocaleString()}</td>
+                `;
+                blacklistTableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching blacklist:', error);
         }
     }
 
